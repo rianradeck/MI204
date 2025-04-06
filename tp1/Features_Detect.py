@@ -71,3 +71,50 @@ plt.imshow(img2)
 plt.title('Image n°2')
 
 plt.show()
+
+
+# FLANN parameters
+FLANN_INDEX_KDTREE = 1
+
+index_params = dict(algorithm = FLANN_INDEX_KDTREE,
+                    trees = 5)
+
+search_params = dict(checks = 50)
+
+# Convert to float32
+descriptors1 = np.float32(kp1.compute(gray1, pts1)[1])
+descriptors2 = np.float32(kp2.compute(gray2, pts2)[1])
+
+# Create FLANN object
+FLANN = cv2.FlannBasedMatcher(indexParams = index_params,
+                             searchParams = search_params)
+
+# Matching descriptor vectors using FLANN Matcher
+matches = FLANN.knnMatch(queryDescriptors = descriptors1,
+                         trainDescriptors = descriptors2,
+                         k = 2)
+
+# Lowe's ratio test
+ratio_thresh = 0.7
+
+# "Good" matches
+good_matches = []
+
+# Filter matches
+for m, n in matches:
+    if m.distance < ratio_thresh * n.distance:
+        good_matches.append(m)
+
+# Draw only "good" matches
+output = cv2.drawMatches(img1 = img1,
+                        keypoints1 = pts1,
+                        img2 = img2,
+                        keypoints2 = pts2,
+                        matches1to2 = good_matches,
+                        outImg = None,
+                        flags = cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+
+plt.imshow(output)
+plt.axis('off')
+plt.title('Good Matches for ' + sys.argv[1].upper())
+plt.show()
