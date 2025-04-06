@@ -57,10 +57,18 @@ time = (t2 - t1)/ cv2.getTickFrequency()
 print("Détection points et calcul descripteurs :",time,"s")
 # Calcul de l'appariement
 t1 = cv2.getTickCount()
-# Paramètres de FLANN 
-FLANN_INDEX_KDTREE = 0
-index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
-search_params = dict(checks=50) 
+
+if detector == 1:
+  index_params = dict(algorithm=6,  # LSH algorithm
+                    table_number=6,  # Nombre de tables de hachage
+                    key_size=12,  # Taille de la clé pour chaque table
+                    multi_probe_level=1)  # Niveau de multi-requête
+  search_params = dict(checks=50)
+else:
+  # Paramètres de FLANN 
+  FLANN_INDEX_KDTREE = 0
+  index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+  search_params = dict(checks=50) 
 
 flann = cv2.FlannBasedMatcher(index_params,search_params)
 
