@@ -13,13 +13,37 @@ print("Type de l'image :",img.dtype)
 t1 = cv2.getTickCount()
 Theta = cv2.copyMakeBorder(img,0,0,0,0,cv2.BORDER_REPLICATE)
 # Mettre ici le calcul de la fonction d'intérêt de Harris
-#
-#
-#
+
+# Calcul des gradients Ix et Iy
+Ix = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)
+Iy = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)
+
+# Calcul des termes de la matrice M (produits des gradients)
+Ix2 = Ix**2
+Iy2 = Iy**2
+Ixy = Ix*Iy
+
+# Paramètres pour le calcul de Harris
+k = 0.04  # Coefficient empirique généralement entre 0.04 et 0.06
+window_size = 3  # Taille de la fenêtre W
+
+# Application d'un filtre gaussien pour le lissage (équivalent à la somme pondérée dans la fenêtre W)
+Ix2 = cv2.GaussianBlur(Ix2, (window_size, window_size), 1)
+Iy2 = cv2.GaussianBlur(Iy2, (window_size, window_size), 1)
+Ixy = cv2.GaussianBlur(Ixy, (window_size, window_size), 1)
+
+# Calcul de la fonction d'intérêt de Harris (Theta)
+det_M = Ix2 * Iy2 - Ixy**2
+trace_M = Ix2 + Iy2
+Theta = det_M - k * trace_M**2
+
+# Normalisation de Theta entre 0 et 1 pour faciliter le seuillage
+Theta = (Theta - Theta.min()) / (Theta.max() - Theta.min())
+
 # Calcul des maxima locaux et seuillage
 Theta_maxloc = cv2.copyMakeBorder(Theta,0,0,0,0,cv2.BORDER_REPLICATE)
 d_maxloc = 3
-seuil_relatif = 0.01
+seuil_relatif = 0.3
 se = np.ones((d_maxloc,d_maxloc),np.uint8)
 Theta_dil = cv2.dilate(Theta,se)
 #Suppression des non-maxima-locaux
@@ -30,6 +54,9 @@ t2 = cv2.getTickCount()
 time = (t2 - t1)/ cv2.getTickFrequency()
 print("Mon calcul des points de Harris :",time,"s")
 print("Nombre de cycles par pixel :",(t2 - t1)/(h*w),"cpp")
+
+print("Valeurs min/max de Theta:", Theta.min(), Theta.max())
+print("Nombre de points détectés:", np.count_nonzero(Theta_maxloc))
 
 plt.subplot(131)
 plt.imshow(img,cmap = 'gray')
